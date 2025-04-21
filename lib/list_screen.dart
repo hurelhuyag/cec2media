@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cec2media/mpv_player.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import 'mpv_player.dart';
+import 'nav_path.dart';
 
 class ListScreen extends StatefulWidget {
   const ListScreen(this.dir, {super.key});
@@ -20,6 +21,7 @@ class _ListScreenState extends State<ListScreen> {
 
   void listDir() async {
     final files = await widget.dir.list().toList();
+    files.sort((a, b) => a.path.compareTo(b.path),);
     setState(() {
       _files = files;
     });
@@ -48,16 +50,16 @@ class _ListScreenState extends State<ListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-      onKeyEvent: (e) {
-        if (e is KeyUpEvent && e.logicalKey == LogicalKeyboardKey.escape) {
-          Navigator.of(context).pop();
-        }
-      },
-      focusNode: FocusNode(),
-      child: Scaffold(
-        body: ListView.builder(
-          physics: RangeMaintainingScrollPhysics(),
+    return Scaffold(
+      appBar: AppBar(
+        title: NavPath(),
+      ),
+      body: Scrollbar(
+        thumbVisibility: true,
+        thickness: 10,
+        radius: Radius.circular(5),
+        child: ListView.builder(
+          primary: true,
           itemCount: _files.length,
           itemBuilder: (context, index) {
             final file = _files[index];
@@ -66,7 +68,7 @@ class _ListScreenState extends State<ListScreen> {
               autofocus: index == 0,
               onTap: () {
                 if (file is Directory) {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => ListScreen(file),));
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => ListScreen(file), settings: RouteSettings(name: name)));
                   return;
                 }
                 if (file is File) {
@@ -76,11 +78,27 @@ class _ListScreenState extends State<ListScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("We do nothing with ${file.runtimeType}")));
               },
               title: Text(name),
-              subtitle: Text("${file.runtimeType}"),
+              subtitle: Text(file is File ? file.lengthSync().h : file is Directory ? 'Directory' : file is Link ? 'Link to ${file.targetSync()}' : 'Unknown'),
             );
           },
         ),
       ),
     );
+  }
+}
+
+extension IntHumanReadable on int {
+  /// Human readable file size
+  String get h {
+    if (this < 1024) {
+      return '${this}B';
+    }
+    if (this < 1024*1024) {
+      return '${this~/1024}kB';
+    }
+    if (this < 1024*1024*1024) {
+      return '${this/1024~/1024}MB';
+    }
+    return '${this/1024/1024~/1024}GB';
   }
 }
