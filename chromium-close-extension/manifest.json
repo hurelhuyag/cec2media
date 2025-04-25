@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Close Interceptor",
+  "version": "1.0",
+  "description": "Intercepts window.close() on YouTube to prevent closing.",
+  "permissions": [
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["injected-script.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -8,14 +8,14 @@ import 'package:flutter/material.dart';
 import 'list_screen.dart';
 import 'nav_path.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class DisksScreen extends StatefulWidget {
+  const DisksScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<DisksScreen> createState() => _DisksScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _DisksScreenState extends State<DisksScreen> {
 
   Set<String> _mountedDisks = {};
   List<String> _disks = [];

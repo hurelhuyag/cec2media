@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cec2media/launcher_screen.dart';
 import 'package:flutter/material.dart';
 
 class MpvPlayerProvider extends InheritedWidget {
@@ -25,7 +26,7 @@ class MpvPlayer {
   bool get isRunning =>_process != null;
 
   void play(File file) async {
-    _process = await Process.start("/usr/bin/mpv", ["--fs", file.path]);
+    _process = await Process.start("/usr/bin/mpv", ["--fs", "--geometry=${w}x$h", file.path]);
     _process?.stdout.transform(SystemEncoding().decoder).listen((event) => debugPrint("mpv: $event"),);
     _process?.stderr.transform(SystemEncoding().decoder).listen((event) => debugPrint("mpv: $event"),);
     _process?.exitCode.then((value) {
