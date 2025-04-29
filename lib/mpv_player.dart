@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cec2media/launcher_screen.dart';
@@ -27,8 +28,8 @@ class MpvPlayer {
 
   void play(File file) async {
     _process = await Process.start("/usr/bin/mpv", ["--fs", "--geometry=${w}x$h", file.path]);
-    _process?.stdout.transform(SystemEncoding().decoder).listen((event) => debugPrint("mpv: $event"),);
-    _process?.stderr.transform(SystemEncoding().decoder).listen((event) => debugPrint("mpv: $event"),);
+    _process?.stdout.transform(SystemEncoding().decoder).transform(LineSplitter()).listen((event) => debugPrint("mpv: $event"),);
+    _process?.stderr.transform(SystemEncoding().decoder).transform(LineSplitter()).listen((event) => debugPrint("mpv: $event"),);
     _process?.exitCode.then((value) {
       debugPrint("mpv process finished with exit code: $value");
       _process = null;

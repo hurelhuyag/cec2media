@@ -1,98 +1,136 @@
-/*
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:cec2media/libuinput.dart';
 import 'package:flutter/material.dart';
 
-*/
-/*class UinputProvider extends InheritedWidget {
-  UinputProvider({super.key, required super.child});
+class UInputProvider extends StatefulWidget {
+  const UInputProvider({super.key, required this.child});
 
-  final Uinput _uinput = Uinput._();
+  final Widget child;
 
   @override
-  bool updateShouldNotify(covariant UinputProvider oldWidget) {
-    return _uinput != oldWidget._uinput;
-  }
-}*//*
+  State<UInputProvider> createState() => _UInputProviderState();
+}
 
+class _UInputProviderState extends State<UInputProvider> {
 
-class Uinput with ChangeNotifier {
-  */
-/*factory Uinput.of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<UinputProvider>()!._uinput;
-  }*//*
-
-  Uinput() {
-    _libuinput.setup();
-    */
-/*sendKeyEvent(EV_ABS, 0, 1000);
-    sendKeyEvent(EV_ABS, 1, 1000);*//*
-
-    sendKeyEvent(EV_REL, 0, 1000);
-    sendKeyEvent(EV_REL, 1, 1000);
-
-    debugPrint("uinput setup complete");
-    _run();
+  final UInput _uInput = UInput._();
+  
+  @override
+  void dispose() {
+    _uInput.dispose();
+    super.dispose();
   }
   
+  @override
+  Widget build(BuildContext context) {
+    return _UInputInheritedWidget(
+      _uInput,
+      child: widget.child
+    );
+  }
+}
+
+class _UInputInheritedWidget extends InheritedWidget {
+  const _UInputInheritedWidget(this._uInput, {required super.child});
+
+  final UInput _uInput;
+
+  @override
+  bool updateShouldNotify(covariant _UInputInheritedWidget oldWidget) {
+    return _uInput != oldWidget._uInput;
+  }
+}
+
+
+class UInput with ChangeNotifier {
+  factory UInput.of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<_UInputInheritedWidget>()!._uInput;
+  }
+
   final _libuinput = LibUinput("libuinput.so");
-  Process? _process;
-  
-  Future<void> _run() async {
-    try {
-      final process = await Process.start("/usr/bin/cec-client", ["-o", "YoutubeTV"]);
-      _process = process;
-      try {
-        debugPrint("listening cec-client");
-        final stream = process.stdout.transform(utf8.decoder).transform(LineSplitter());
-        await for (var line in stream) {
-          debugPrint(line);
+  Process? _cecProcess;
+  StreamSubscription<String>? _cecSub;
 
-          var i = line.indexOf("key released: ");
-          var offset = 14;
-          bool release = true;
-          if (i == -1) {
-            i = line.indexOf("key pressed: ");
-            offset = 13;
-            release = false;
-          }
-          if (i > 0) {
-            i += offset;
-            var j = line.indexOf(" ", i);
-            var keyName = line.substring(i, j).toLowerCase();
-            debugPrint("key: $keyName");
+  UInput._() {
+    _libuinput.setup();
+    /*sendKeyEvent(EV_ABS, 0, 1000);
+    sendKeyEvent(EV_ABS, 1, 1000);*/
+    sendKeyEvent(EV_REL, 0, 1000); // move cursor away
+    sendKeyEvent(EV_REL, 1, 1000); // move cursor away
+    debugPrint("uinput setup complete");
+    _startCecProcess();
+    //_initSignalHandlers();
+  }
 
-            final key = _keyMap[keyName];
-            if (key != null) {
-              _libuinput.sendKeyEvent(EV_KEY, key, release ? 0 : 1);
-            } else {
-              debugPrint("can't find key $keyName");
-            }
-          }
-        }
-      } finally {
-        debugPrint("\nkilling cec-client process\n");
-        process.kill();
+  Future<void> _startCecProcess() async {
+    final process = await Process.start("/usr/bin/cec-client", ["-o", "YoutubeTV"]);
+    _cecProcess = process;
+    debugPrint("cec-client process started");
+    _cecSub = process.stdout.transform(utf8.decoder).transform(LineSplitter()).listen(_handleCecLine);
+    debugPrint("cec-client process listened");
+  }
+
+  void _handleCecLine(String line) {
+    debugPrint(line);
+
+    var i = line.indexOf("key released: ");
+    var offset = 14;
+    bool release = true;
+    if (i == -1) {
+      i = line.indexOf("key pressed: ");
+      offset = 13;
+      release = false;
+    }
+    if (i > 0) {
+      i += offset;
+      var j = line.indexOf(" ", i);
+      var keyName = line.substring(i, j).toLowerCase();
+      debugPrint("key: $keyName");
+
+      final key = _keyMap[keyName];
+      if (key != null) {
+        _libuinput.sendKeyEvent(EV_KEY, key, release ? 0 : 1);
+      } else {
+        debugPrint("can't find key $keyName");
       }
-    } finally {
-      debugPrint("\ncleaning uinput device\n");
-      _libuinput.destroy();
     }
   }
 
   void sendKeyEvent(int type, int code, int value) {
     _libuinput.sendKeyEvent(type, code, value);
   }
+  
+  void sendCecEvent(String event) {
+    _cecProcess?.stdin.writeln(event);
+    _cecProcess?.stdin.flush();
+  }
 
   @override
   void dispose() {
     super.dispose();
-    debugPrint("Uinput.dispose");
-    _process?.kill();
+    debugPrint("UInput.dispose");
+    debugPrint("\nkilling cec-client process\n");
+    _cecSub?.cancel();
+    _cecProcess?.kill();
+    debugPrint("\ncleaning uinput device\n");
     _libuinput.destroy();
+    debugPrint("Uinput,CEC are cleaned up");
   }
+
+  /*void _initSignalHandlers() {
+    List<StreamSubscription<ProcessSignal>> signalSubs = [];
+    void handleProcessSignal(ProcessSignal signal) {
+      for (var sub in signalSubs) {
+        sub.cancel();
+      }
+      dispose();
+    }
+    signalSubs.add(ProcessSignal.sigterm.watch().listen(handleProcessSignal));
+    signalSubs.add(ProcessSignal.sigint.watch().listen(handleProcessSignal));
+  }*/
 }
 
 final _keyMap = <String, int>{
@@ -121,4 +159,4 @@ final _keyMap = <String, int>{
   "f4": 62,
 
   "sub": 36, // subtitle key to v key for mpv subtitle change
-};*/
+};

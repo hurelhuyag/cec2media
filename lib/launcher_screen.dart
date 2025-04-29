@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,8 +10,16 @@ Process? _terminalProcess;
 
 int w = 1920, h = 1080;
 
-class LauncherScreen extends StatelessWidget {
+class LauncherScreen extends StatefulWidget {
   const LauncherScreen({super.key});
+
+  @override
+  State<LauncherScreen> createState() => _LauncherScreenState();
+}
+
+class _LauncherScreenState extends State<LauncherScreen> {
+
+  FocusNode? _focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +29,10 @@ class LauncherScreen extends StatelessWidget {
     debugPrint("Launcher size: ${w}x$h");
     return Scaffold(
       body: GridView.count(
+        primary: true,
         crossAxisCount: 3,
         children: [
-          _buildMenuItem(context, "Youtube", Icons.tv, () => _launchYoutube(w, h),),
+          _buildMenuItem(context, "Youtube", Icons.tv, () => _launchYoutube(context, w, h), true),
           _buildMenuItem(context, "Media", Icons.video_file, () => _launchMedia(context),),
           _buildMenuItem(context, "Terminal", Icons.terminal, _launchTerminal),
           _buildMenuItem(context, "Chromium", Icons.web, () => _launchBrowser(w, h),),
@@ -31,13 +41,15 @@ class LauncherScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, String title, IconData icon, void Function() onTap) {
+  Widget _buildMenuItem(BuildContext context, String title, IconData icon, void Function() onTap, [bool autofocus = false]) {
     return AspectRatio(
       aspectRatio: 1,
       child: InkWell(
+        focusNode: autofocus ? _focusNode : null,
+        autofocus: autofocus,
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0) ,
           child: Column(
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -59,7 +71,8 @@ class LauncherScreen extends StatelessWidget {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) => DisksScreen(), settings: RouteSettings(name: "Disks")));
   }
 
-  Future<void> _launchYoutube(int w, int h) async {
+  Future<void> _launchYoutube(BuildContext context, int w, int h) async {
+    _showLoadingDialog(context, Duration(seconds: 10));
     _youtubeProcess?.kill();
     _youtubeProcess = await Process.start("/usr/bin/chromium", [
       "--kiosk", "--window-position=0,0", "--window-size=$w,$h",
@@ -102,5 +115,31 @@ class LauncherScreen extends StatelessWidget {
       debugPrint("terminal: process finished with exit code: $value");
       _terminalProcess = null;
     },);
+  }
+
+  Future<void> _showLoadingDialog(BuildContext context, Duration duration) async {
+    final timer = Timer(duration, () => Navigator.of(context).pop(),);
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(100),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: FittedBox(
+                child: CircularProgressIndicator()
+            ),
+          ),
+        ),
+      ),
+    );
+    timer.cancel();
+
+    // Somehow flutter lost focus. So force to focus something
+    if (context.mounted) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    }
   }
 }
