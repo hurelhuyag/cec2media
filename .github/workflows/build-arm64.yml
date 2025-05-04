@@ -13,7 +13,7 @@ jobs:
     name: Arm64 Release
 
     steps:
-      - run: echo "OS_ARCH=${{runner.arch}}" | tr '[:upper:]' '[:lower:]' >> ${{GITHUB_ENV}}
+      - run: echo "OS_ARCH=${{runner.arch}}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
 
       - name: Checkout code
         uses: actions/checkout@v4
