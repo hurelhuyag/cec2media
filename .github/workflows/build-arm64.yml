@@ -41,7 +41,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: build/linux/${{env.RUNNER_ARCH}}/release/cec2media-${{github.ref}}.deb
-          asset_name: cec2media-${{github.ref}}-${{env.RUNNER_ARCH}}.deb
+          asset_path: build/linux/${{env.RUNNER_ARCH}}/release/cec2media-${{github.ref_name}}.deb
+          asset_name: cec2media-${{github.ref_name}}-${{env.RUNNER_ARCH}}.deb
           asset_content_type: application/vnd.debian.binary-package
           

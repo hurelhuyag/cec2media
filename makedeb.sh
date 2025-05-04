@@ -16,7 +16,7 @@ fi
 APP_NAME=$(cat pubspec.yaml | grep name: | cut -d ' ' -f2)
 VERSION=$(cat pubspec.yaml | grep version: | cut -d ' ' -f2)
 SOURCE="build/linux/$ARCH_F/release/bundle";
-TARGET="build/linux/$ARCH_F/release/$APP_NAME-$VERSION";
+TARGET="build/linux/$ARCH_F/release/$APP_NAME-v$VERSION";
 
 flutter build linux --release --obfuscate --split-debug-info="build/linux/$ARCH_F/release/symbols"
 mkdir -p "$TARGET/DEBIAN/"
