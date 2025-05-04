@@ -31,7 +31,7 @@ Package: $APP_NAME
 Version: $VERSION
 Architecture: $ARCH
 Maintainer: hurelhuyag <hurelhuyag@gmail.com>
-Depends: cage, chromium-browser, chromium-codecs-ffmpeg-extra, cec-utils, pulseaudio, imv, mpv, libuinput-dev
+Depends: cage, chromium-browser, chromium-codecs-ffmpeg-extra, cec-utils, pulseaudio, imv, mpv
 Installed-Size: 22600
 Homepage: https://www.github.com/hurelhuyag/$APP_NAME
 Description: This is designed to watch Youtube TV, or your local video contents on your tv controlled by TV remotes vis HDMI-CEC
@@ -61,8 +61,11 @@ After=getty@%i.service
 [Service]
 Type=simple
 ExecStart=/usr/bin/cage /opt/$APP_NAME/$APP_NAME
-ExecStartPost=+sh -c "tty_name='%i'; exec chvt $${tty_name#tty}"
+ExecStartPost=+sh -c "tty_name='%i'; exec chvt \$\${tty_name#tty}"
 Restart=always
+RestartSec=5s
+StartLimitInterval=60s
+StartLimitBurst=3
 User=pi
 # Log this user with utmp, letting it show up with commands 'w' and
 # 'who'. This is needed since we replace (a)getty.
@@ -75,6 +78,8 @@ TTYVHangup=yes
 TTYVTDisallocate=yes
 # Fail to start if not controlling the virtual terminal.
 StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
 
 # Set up a full (custom) user session for the user, required by Cage.
 PAMName=pi
