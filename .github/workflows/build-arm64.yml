@@ -1,0 +1,47 @@
+name: Build on ARM64
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04-arm
+    name: Arm64 Release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: flutter sdk
+        uses: hurelhuyag/flutter-arm64-action@HEAD
+
+      - run: |
+          echo "Tag: ${{github.ref}}"
+          echo "Arch: ${{env.RUNNER_ARCH}}"
+
+      - run: ./makedeb.sh
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: build/linux/${{env.RUNNER_ARCH}}/release/cec2media-${{github.ref}}.deb
+          asset_name: cec2media-${{github.ref}}-${{env.RUNNER_ARCH}.deb
+          asset_content_type: application/vnd.debian.binary-package
+          

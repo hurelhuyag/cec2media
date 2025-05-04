@@ -33,6 +33,9 @@ class _DisksScreenState extends State<DisksScreen> {
   void _watchDisks() {
     _devSub?.cancel();
     _devSub = Directory("/dev/").watch().listen((event) {
+      if (event.path == "/dev/fuse" || event.path == "/dev/null") { // when ntfs partition mounted, this event comes continuously
+        return;
+      }
       debugPrint("/dev/ ${event.type} ${event.path}");
       _listDisks();
     },);

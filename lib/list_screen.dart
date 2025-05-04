@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cec2media/image_viewer.dart';
 import 'package:flutter/material.dart';
 
 import 'mpv_player.dart';
@@ -29,16 +30,25 @@ class _ListScreenState extends State<ListScreen> {
 
   void handleFile(File file) async {
     final fileProcess = await Process.start("/usr/bin/file", ["--brief", "--mime-type", file.path]);
-    final result = await fileProcess.stdout.transform(utf8.decoder).join();
-    if (!result.trim().startsWith("video/") && result.trim() != "application/octet-stream") {
+    final mimeType = (await fileProcess.stdout.transform(utf8.decoder).join()).trim();
+    if (mimeType.startsWith("image/")) {
+      showImage(file);
+      return;
+    }
+    /*if (mimeType.startsWith("audio/")) { mpv doesn't show GUI if argument is audio file. which makes it hard to exit before audio finished
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Not A Video")));
+        MpvPlayer.of(context).play(file);
+      }
+      return;
+    }*/
+    if (mimeType.startsWith("video/") || mimeType.trim() == "application/octet-stream") {
+      if (mounted) {
+        MpvPlayer.of(context).play(file);
       }
       return;
     }
-
     if (mounted) {
-      MpvPlayer.of(context).play(file);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Cant open a $mimeType file")));
     }
   }
 
