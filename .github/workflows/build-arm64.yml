@@ -13,7 +13,11 @@ jobs:
     name: Arm64 Release
 
     steps:
-      - run: echo "OS_ARCH=${{runner.arch}}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+      - name: Detect Arch
+        id: detect_arch
+        run: |
+          os_arch=$(echo "${{ runner.arch }}" | tr '[:upper:]' '[:lower:]')
+          echo "os_arch=$os_arch" >> $GITHUB_OUTPUT
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,7 +27,7 @@ jobs:
 
       - run: |
           echo "Tag: ${{github.ref_name}}"
-          echo "Arch: $OS_ARCH"
+          echo "Arch: ${{steps.detect_arch.outputs.os_arch}}"
 
       - run: ./makedeb.sh
 
@@ -43,7 +47,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: build/linux/$OS_ARCH/release/cec2media-${{github.ref_name}}.deb
-          asset_name: cec2media-${{github.ref_name}}-$OS_ARCH.deb
+          asset_path: build/linux/${{steps.detect_arch.outputs.os_arch}}/release/cec2media-${{github.ref_name}}.deb
+          asset_name: cec2media-${{github.ref_name}}-${{steps.detect_arch.outputs.os_arch}}.deb
           asset_content_type: application/vnd.debian.binary-package
           
