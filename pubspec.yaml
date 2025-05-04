@@ -1,8 +1,8 @@
 name: cec2media
-description: "A new Flutter project."
+description: "Very Simple Home Media Station"
 publish_to: 'none'
 
-version: 0.0.10+1
+version: 0.0.11+1
 
 environment:
   sdk: ^3.7.0
