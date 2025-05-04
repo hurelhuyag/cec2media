@@ -2,7 +2,7 @@ name: cec2media
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 0.0.9+1
+version: 0.0.10+1
 
 environment:
   sdk: ^3.7.0
