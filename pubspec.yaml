@@ -23,3 +23,5 @@ flutter:
 
   assets:
     - chromium-close-extension/
+    - mpv/
+    - imv.conf

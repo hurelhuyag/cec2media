@@ -27,7 +27,15 @@ class MpvPlayer {
   bool get isRunning =>_process != null;
 
   void play(File file) async {
-    _process = await Process.start("/usr/bin/mpv", ["--fs", "--geometry=${w}x$h", file.path]);
+    _process = await Process.start(
+        "/usr/bin/mpv",
+        [
+          "--fs",
+          "--geometry=${w}x$h",
+          "--config-dir=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/",
+          file.path
+        ]
+    );
     _process?.stdout.transform(SystemEncoding().decoder).transform(LineSplitter()).listen((event) => debugPrint("mpv: $event"),);
     _process?.stderr.transform(SystemEncoding().decoder).transform(LineSplitter()).listen((event) => debugPrint("mpv: $event"),);
     _process?.exitCode.then((value) {
