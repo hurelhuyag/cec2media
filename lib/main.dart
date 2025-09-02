@@ -24,11 +24,12 @@ Future<void> _runHttpServer() async {
   debugPrint("http server stopped");
 }
 
-void main() {
+void main(List<String> args) {
+  final useVlc = args.contains("--useVlc");
   debugPrint("flutter main");
   runApp(
     GracefulShutdown(
-      child: const MyApp()
+      child: MyApp(useVlc: useVlc,)
     )
   );
   _runHttpServer();
@@ -37,7 +38,9 @@ void main() {
 GlobalKey<NavigatorState> _nav = GlobalKey();
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.useVlc});
+
+  final bool useVlc;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -71,6 +74,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MpvPlayerProvider(
+      useVlc: widget.useVlc,
       child: UInputProvider(
         child: MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(2)),

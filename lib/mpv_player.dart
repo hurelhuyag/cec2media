@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 
 class MpvPlayerProvider extends InheritedWidget {
 
-  MpvPlayerProvider({super.key, required super.child});
+  MpvPlayerProvider({super.key, required super.child, this.useVlc = false});
 
-  final MpvPlayer _data = MpvPlayer._();
+  final bool useVlc;
+  late final MpvPlayer _data = MpvPlayer._(useVlc);
 
   @override
   bool updateShouldNotify(covariant InheritedWidget oldWidget) {
@@ -20,22 +21,43 @@ class MpvPlayer {
   factory MpvPlayer.of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<MpvPlayerProvider>()!._data;
   }
-  MpvPlayer._();
+  MpvPlayer._(this.useVlc);
+
+  final bool useVlc;
 
   Process? _process;
 
   bool get isRunning =>_process != null;
 
   void play(File file) async {
-    _process = await Process.start(
-        "/usr/bin/mpv",
-        [
-          "--fs",
-          "--geometry=${w}x$h",
-          "--config-dir=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/",
-          file.path
-        ]
-    );
+    if (useVlc) {
+      _process = await Process.start(
+          "/usr/bin/vlc",
+          [
+            "--key-leave-fullscreen=F12",
+            "--key-quit=Esc",
+            "--play-and-exit",
+            "--fullscreen",
+            "--vout=wayland",
+            // "--avcodec-hw=drm",
+            "--avcodec-hw=auto",
+            "--aout=alsa",
+            "--alsa-audio-device=hw:CARD=vc4hdmi0,DEV=0",
+            "--stereo-mode=auto",
+            file.path
+          ]
+      );
+    } else {
+      _process = await Process.start(
+          "/usr/bin/mpv",
+          [
+            "--fs",
+            "--geometry=${w}x$h",
+            "--config-dir=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/",
+            file.path
+          ]
+      );
+    }
     _process?.stdout.transform(SystemEncoding().decoder).transform(LineSplitter()).listen((event) => debugPrint("mpv: $event"),);
     _process?.stderr.transform(SystemEncoding().decoder).transform(LineSplitter()).listen((event) => debugPrint("mpv: $event"),);
     _process?.exitCode.then((value) {
