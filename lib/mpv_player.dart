@@ -61,7 +61,7 @@ class MpvPlayer {
             "--fs",
             "--geometry=${w}x$h",
             "--config-dir=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/",
-            "--script=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/scripts/osc.lua",
+            "--script=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/osc.lua",
             file.path
           ]
       );
