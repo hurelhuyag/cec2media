@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:cec2media/image_viewer.dart';
+import 'package:cec2media/models/sort.dart';
 import 'package:flutter/material.dart';
 
 import 'mpv_player.dart';
 import 'nav_path.dart';
+
+final _random = math.Random();
 
 class ListScreen extends StatefulWidget {
   const ListScreen(this.dir, {super.key});
@@ -18,14 +22,29 @@ class ListScreen extends StatefulWidget {
 
 class _ListScreenState extends State<ListScreen> {
 
+  Sort _sort = Sort.abc;
   List<FileSystemEntity> _files = [];
 
   void listDir() async {
     final files = await widget.dir.list().toList();
-    files.sort((a, b) => a.path.compareTo(b.path),);
+    _sortFiles();
     setState(() {
       _files = files;
     });
+  }
+
+  void _sortFiles() {
+    switch(_sort) {
+      case Sort.abc:
+        _files.sort((a, b) => a.path.compareTo(b.path),);
+        break;
+      case Sort.modifiedDate:
+        _files.sort((a, b) => -a.statSync().modified.compareTo(b.statSync().modified),);
+        break;
+      case Sort.random:
+        _files.sort((a, b) => _random.nextInt(1000),);
+        break;
+    }
   }
 
   void handleFile(File file) async {
@@ -63,6 +82,27 @@ class _ListScreenState extends State<ListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: NavPath(),
+        actions: [
+          SegmentedButton<Sort>(
+            segments: [
+              ButtonSegment<Sort>(value: Sort.abc, label: Text("Abc")),
+              ButtonSegment<Sort>(value: Sort.modifiedDate, label: Text("Date")),
+              ButtonSegment<Sort>(value: Sort.random, label: Text("Random")),
+            ],
+            selected: {
+              _sort
+            },
+            showSelectedIcon: true,
+            onSelectionChanged: (val) {
+              setState(() {
+                _sort = val.first;
+              });
+              _sortFiles();
+              setState(() {
+              });
+            },
+          ),
+        ],
       ),
       body: Scrollbar(
         thumbVisibility: true,
