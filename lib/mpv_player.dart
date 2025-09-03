@@ -34,16 +34,23 @@ class MpvPlayer {
       _process = await Process.start(
           "/usr/bin/vlc",
           [
-            "--key-leave-fullscreen=F12",
+            "--key-subtitle-track=V",
+            "--key-leave-fullscreen=F11",
             "--key-quit=Esc",
             "--play-and-exit",
+            "--no-video-title-show",
+            "--no-video-deco",
             "--fullscreen",
-            "--vout=wayland",
+            "--width=$w",
+            "--height=$h",
+            "--vout=gl",
+            // "--avcodec-hw=none",
             // "--avcodec-hw=drm",
-            "--avcodec-hw=auto",
-            "--aout=alsa",
-            "--alsa-audio-device=hw:CARD=vc4hdmi0,DEV=0",
-            "--stereo-mode=auto",
+            // "--avcodec-hw=auto",
+            "--avcodec-hw==v4l2m2m",
+            // "--aout=alsa",
+            // "--alsa-audio-device=hw:CARD=vc4hdmi0,DEV=0",
+            // "--stereo-mode=auto",
             file.path
           ]
       );
@@ -54,6 +61,7 @@ class MpvPlayer {
             "--fs",
             "--geometry=${w}x$h",
             "--config-dir=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/",
+            "--script=${File(Platform.resolvedExecutable).parent.path}/data/flutter_assets/mpv/scripts/osc.lua",
             file.path
           ]
       );
